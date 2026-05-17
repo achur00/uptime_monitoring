@@ -12,7 +12,18 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('monitor_events', function (Blueprint $table) {
-            $table->id();
+             $table->id();
+
+            $table->foreignId('monitor_id')->constrained()->cascadeOnDelete();
+
+            $table->integer('status_code')->default(0);
+
+            $table->integer( 'response_time_ms')->nullable();
+
+            $table->boolean('is_up');
+
+            $table->timestamp('checked_at');
+
             $table->timestamps();
         });
     }
