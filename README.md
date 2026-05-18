@@ -1,58 +1,130 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Uptime Monitor
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Simple Laravel API for monitoring site uptime and storing check history.
 
-## About Laravel
+## Requirements
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- Laravel 13
+- PHP 8.4+
+- Composer
+- MySQL or another supported Laravel database
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Project Setup
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+1. Clone the repository.
+2. Install PHP dependencies.
+3. Create and update environment config.
+4. Generate app key.
+5. Run migrations.
+6. Start the server.
 
-## Learning Laravel
+~~~bash
+composer install
+cp .env.example .env
+php artisan key:generate
+php artisan migrate
+php artisan serve
+~~~
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+If you use Herd, open the Herd URL for this project instead of php artisan serve.
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## API Endpoints
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+- GET /api/monitors
+- POST /api/monitors
+- GET /api/monitors/{id}/history
 
-## Agentic Development
+## Test With Postman
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+### 1) Create a monitor (POST)
 
-```bash
-composer require laravel/boost --dev
+Request:
 
-php artisan boost:install
-```
+- Method: POST
+- URL: http://127.0.0.1:8000/api/monitors
+- Headers:
+	- Accept: application/json
+	- Content-Type: application/json
+- Body (raw JSON):
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+~~~json
+{
+	"url": "https://example.com",
+	"check_interval": 5,
+	"threshold": 3
+}
+~~~
 
-## Contributing
+Expected response:
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+- Status: 201
+- JSON payload with created monitor in data
 
-## Code of Conduct
+### 2) List monitors (GET)
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+- Method: GET
+- URL: http://127.0.0.1:8000/api/monitors
+- Header: Accept: application/json
 
-## Security Vulnerabilities
+### 3) Get monitor history (GET)
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+- Method: GET
+- URL: http://127.0.0.1:8000/api/monitors/1/history?per_page=15
+- Header: Accept: application/json
 
-## License
+## Test With Browser Console
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Open your app in the browser, press F12, then run these in Console.
+
+### GET monitors
+
+~~~javascript
+fetch('/api/monitors', {
+	method: 'GET',
+	headers: { 'Accept': 'application/json' }
+})
+.then(async r => ({ status: r.status, body: await r.json() }))
+.then(console.log)
+.catch(console.error);
+~~~
+
+### POST monitor
+
+~~~javascript
+fetch('/api/monitors', {
+	method: 'POST',
+	headers: {
+		'Accept': 'application/json',
+		'Content-Type': 'application/json'
+	},
+	body: JSON.stringify({
+		url: 'https://example.com',
+		check_interval: 5,
+		threshold: 3
+	})
+})
+.then(async r => ({ status: r.status, body: await r.json() }))
+.then(console.log)
+.catch(console.error);
+~~~
+
+If your app is not on the same host/port, use full URLs like http://127.0.0.1:8000/api/monitors in fetch.
+
+## Optional Queue and Scheduler
+
+If you are dispatching monitor jobs and using scheduled checks:
+
+~~~bash
+php artisan queue:work
+php artisan schedule:work
+~~~
+
+## Common Troubleshooting
+
+- Composer curl error 6 / Could not resolve host:
+	- Check DNS and internet access.
+	- Try switching DNS servers and run ipconfig /flushdns.
+- 422 validation errors on POST /api/monitors:
+	- Confirm url is valid and unique.
+	- Confirm check_interval is between 1 and 60.
+	- Confirm threshold is at least 1.
